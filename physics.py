@@ -1,8 +1,8 @@
 import numpy as np
 
-def calculate_1dof_acceleration(rocket, environment, current_altitude_m, current_velocity_ms, current_thrust_n):
+def calculate_1dof_acceleration(rocket, environment, current_altitude_m, current_velocity_ms, current_thrust_n, current_mass_kg):
     g = 9.81
-    force_gravity = rocket.dry_mass_kg * g
+    force_gravity = current_mass_kg * g
     rho = environment.get_density(current_altitude_m)
     current_temperature = environment.get_temperature(current_altitude_m)
     speed_of_sound = np.sqrt(1.4 * 287.05 * current_temperature)
@@ -14,5 +14,5 @@ def calculate_1dof_acceleration(rocket, environment, current_altitude_m, current
     force_net = current_thrust_n - force_gravity - force_drag
     if current_altitude_m <= 0 and force_net < 0:
         force_net = 0
-    acceleration = force_net / rocket.dry_mass_kg
+    acceleration = force_net / current_mass_kg
     return acceleration
