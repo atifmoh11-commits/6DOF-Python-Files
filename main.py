@@ -4,17 +4,21 @@ from environment import Environment
 from simulation import flight_loop, hit_ground
 from scipy.integrate import solve_ivp
 
-my_rocket = Rocket(manual_mass=1, manual_diameter=0.076)
+my_rocket = Rocket(manual_mass=1, manual_diameter=0.076, drag_file="drag_data.csv")
 my_env = Environment(launchpad_altitude_m=0)
 
 time_limit = (0.0, 30.0)
 initital_state = [0.0, 0.0] #altitude, velocity
 
+ground_event = lambda t, y: hit_ground(t, y, my_rocket, my_env)
+ground_event.terminal = True
+ground_event.direction = -1
+
 flight_data = solve_ivp(
     fun=lambda t, y: flight_loop(t, y, my_rocket, my_env),
     t_span=time_limit,
     y0=initital_state,
-    events=lambda t, y: hit_ground(t, y, my_rocket, my_env),
+    events=ground_event,
     max_step=0.01
 )
 
