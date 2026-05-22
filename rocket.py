@@ -2,15 +2,32 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 class Rocket:
-    def __init__(self, manual_mass, manual_diameter, drag_file=None):
+    def __init__(self, manual_mass, manual_diameter, drag_file=None, motor_file=None):
         self.dry_mass_kg = manual_mass
         self.diameter_m = manual_diameter
         self.reference_area = np.pi * (self.diameter_m / 2)**2
 
         self.cd_func = lambda mach: 0.75
+        self.thrust_func = lambda time: 0.0
 
         if drag_file:
             self.load_drag_curve(drag_file)
+
+        if motor_file:
+            self.load_motor_curve(motor_file)
+
+    def load_motor_curve(self, motor_file):
+        data = np.loadtxt(motor_file, delimiter=',', comments='#')
+        raw_time = data[:, 0] 
+        raw_thrust = data[:, 1]   
+
+        unique_time, unique_indices = np.unique(raw_time, return_index=True)
+        unique_thrust = raw_thrust[unique_indices]
+        
+        self.thrust_func = interp1d(unique_time, unique_thrust, kind='linear', bounds_error=False, fill_value=(0.0, 0.0))
+
+    def get_thrust(self, current_time):
+        return float(self.thrust_func(current_time))
 
     def load_drag_curve(self, drag_file):
         data = np.loadtxt(drag_file, delimiter=',', comments='#')

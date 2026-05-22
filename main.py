@@ -4,7 +4,7 @@ from environment import Environment
 from simulation import flight_loop, hit_ground
 from scipy.integrate import solve_ivp
 
-my_rocket = Rocket(manual_mass=1, manual_diameter=0.076, drag_file="drag_data.csv")
+my_rocket = Rocket(manual_mass=1, manual_diameter=0.076, drag_file="drag_data.csv", motor_file="motor_data.csv")
 my_env = Environment(launchpad_altitude_m=0)
 
 time_limit = (0.0, 30.0)

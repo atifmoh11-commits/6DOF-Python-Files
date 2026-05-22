@@ -12,5 +12,7 @@ def calculate_1dof_acceleration(rocket, environment, current_altitude_m, current
     if current_velocity_ms < 0:
         force_drag = -1 * force_drag
     force_net = current_thrust_n - force_gravity - force_drag
+    if current_altitude_m <= 0 and force_net < 0:
+        force_net = 0
     acceleration = force_net / rocket.dry_mass_kg
     return acceleration
