@@ -119,4 +119,4 @@ class Rocket:
             i_long = 0.05
         if np.isnan(i_rot):
             i_rot = 0.001
-        return np.array([[i_rot, 0, 0], [0, i_long, 0], [0, 0, i_long]])
+        return np.array([[i_long, 0, 0], [0, i_long, 0], [0, 0, i_rot]])

@@ -66,7 +66,7 @@ def calculate_6dof_kinematics(rocket, environment, pos, vel, quat, omega, curren
 
     torque_net = np.array([0.0, 0.0, 0.0])  # Placeholder for net torque calculation
 
-    if airspeed > 0.1:
+    if airspeed > 0.1 and vel[2] > 0:
         air_dir = air_velocity / airspeed
         cos_alpha = np.dot(rocket_pointing_dir, air_dir)
         cos_alpha = np.clip(cos_alpha, -1.0, 1.0)
@@ -80,9 +80,42 @@ def calculate_6dof_kinematics(rocket, environment, pos, vel, quat, omega, curren
             torque_axis = torque_axis / np.linalg.norm(torque_axis)
             torque_net = (normal_force_mag * lever_arm) * torque_axis
 
+        omega_inertial = rot_matrix @ omega
+
+        # accounting for imperfections in rocket that induce roll (fin cant etc.)
+        cant_angle_rad = np.radians(0.1)
+
+        fin_area = rocket.fin_span * (rocket.fin_root_chord + rocket.fin_tip_chord) / 2.0
+        moment_arm = (rocket.diameter_m / 2.0) + (rocket.fin_span / 2.0)
+        cl_alpha = 2.0 * np.pi
+        q = 0.5 * rho * (airspeed**2)
+
+        w_roll = np.dot(omega_inertial, rocket_pointing_dir)
+        
+        roll_force_per_fin = q * fin_area * cl_alpha * cant_angle_rad
+        roll_driving_torque_mag = rocket.num_fins * roll_force_per_fin * moment_arm
+        roll_damping_torque_mag = -(rocket.num_fins * q * fin_area * cl_alpha * (moment_arm**2) * w_roll) / airspeed
+
+        total_roll_torque_mag = roll_driving_torque_mag + roll_damping_torque_mag
+        roll_torque_vec = total_roll_torque_mag * rocket_pointing_dir
+
+        torque_net += roll_torque_vec
+
+        pitch_yaw_omega_inertial = omega_inertial - (w_roll * rocket_pointing_dir)
+        damping_factor = 0.05 * rho * airspeed * rocket.reference_area * (rocket.dist_to_fins**2)
+        pitch_yaw_damping_torque = -damping_factor * pitch_yaw_omega_inertial
+        torque_net += pitch_yaw_damping_torque
+        torque_net_body = rot_matrix.T @ torque_net
+    else:
+        damping_torque_body = -1.0 * omega
+        target_dir = np.array([0.0, 0.0, -1.0])
+        pendulum_torque_world = 1.0 * np.cross(rocket_pointing_dir, target_dir)
+        pendulum_torque_body = rot_matrix.T @ pendulum_torque_world
+        torque_net_body = damping_torque_body + pendulum_torque_body
+
     inertia_inv = np.linalg.inv(inertia_tensor)
     gyroscopic_torque = np.cross(omega, inertia_tensor @ omega)
-    angular_acceleration = inertia_inv @ (torque_net - gyroscopic_torque)
+    angular_acceleration = inertia_inv @ (torque_net_body - gyroscopic_torque)
 
     return acceleration, angular_acceleration
 

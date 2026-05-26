@@ -5,6 +5,7 @@ def flight_loop(time, state, rocket, environment):
     pos = np.array(state[0:3])  # x, y, z
     vel = np.array(state[3:6])  # vx, vy, vz
     quat = np.array(state[6:10])  # q1, q2, q3, q4
+    quat = quat / np.linalg.norm(quat)  # Normalize quaternion to prevent drift
     omega = np.array(state[10:13])  # wx, wy, wz
 
     current_thrust = rocket.get_thrust(time)

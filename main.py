@@ -56,7 +56,7 @@ flight_data = solve_ivp(
     t_span=time_limit,
     y0=initital_state,
     events=ground_event,
-    max_step=0.01
+    max_step=0.01,
 )
 
 times = flight_data.t
@@ -75,12 +75,17 @@ euler_angles = rotations.as_euler('xyz', degrees=True)
 
 pitch = euler_angles[:, 0]
 yaw = euler_angles[:, 1]
-roll = euler_angles[:, 2]
+roll = np.rad2deg(np.unwrap(np.deg2rad(euler_angles[:, 2])))
 
+accelerations = np.gradient(velocities, times)
+mach_numbers = velocities / 343.0
 
 telemetry_data = {
     "Time": times, "X": x_pos, "Y": y_pos, "Z": z_pos,
-    "Q0": q0, "Q1": q1, "Q2": q2, "Q3": q3
+    "Q0": q0, "Q1": q1, "Q2": q2, "Q3": q3,
+    "Velocity": velocities,
+    "Acceleration": accelerations,
+    "Mach": mach_numbers
 }
 df = pd.DataFrame(telemetry_data)
 df.to_csv("telemetry.csv", index=False)
