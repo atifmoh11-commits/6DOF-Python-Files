@@ -1,18 +1,46 @@
 import numpy as np
 
-def calculate_1dof_acceleration(rocket, environment, current_altitude_m, current_velocity_ms, current_thrust_n, current_mass_kg):
-    g = 9.81
+def quat_to_rot_matrix(quat):
+    w, x, y, z = quat
+    M = np.array([
+        [1 - 2*y**2 - 2*z**2,     2*x*y - 2*w*z,         2*x*z + 2*w*y],
+        [2*x*y + 2*w*z,           1 - 2*x**2 - 2*z**2,   2*y*z - 2*w*x],
+        [2*x*z - 2*w*y,           2*y*z + 2*w*x,         1 - 2*x**2 - 2*y**2]
+    ])
+    return M
+
+def calculate_6dof_kinematics(rocket, environment, pos, vel, quat, omega, current_thrust_n, current_mass_kg, inertia_tensor):
+    rot_matrix = quat_to_rot_matrix(quat)
+    rocket_pointing_dir = rot_matrix @ np.array([0, 0, 1])
+
+    g = np.array([0, 0, -9.81])
     force_gravity = current_mass_kg * g
-    rho = environment.get_density(current_altitude_m)
-    current_temperature = environment.get_temperature(current_altitude_m)
-    speed_of_sound = np.sqrt(1.4 * 287.05 * current_temperature)
-    current_mach = abs(current_velocity_ms) / speed_of_sound
-    drag_coefficient = rocket.get_cd(current_mach)
-    force_drag = 0.5 * rho * (current_velocity_ms**2) * drag_coefficient * rocket.reference_area
-    if current_velocity_ms < 0:
-        force_drag = -1 * force_drag
-    force_net = current_thrust_n - force_gravity - force_drag
-    if current_altitude_m <= 0 and force_net < 0:
-        force_net = 0
+    speed = np.linalg.norm(vel)
+    rho = environment.get_density(pos[2])
+    temp = environment.get_temperature(pos[2])
+
+    speed_of_sound = np.sqrt(1.4 * 287.05 * temp)
+    current_mach = speed / speed_of_sound
+
+    if speed > 0.1:
+        drag_dir = -vel / speed
+        drag_coefficient = rocket.get_cd(current_mach)
+        force_drag = 0.5 * rho * (speed**2) * drag_coefficient * rocket.reference_area * drag_dir
+    else:
+        force_drag = np.array([0.0, 0.0, 0.0])
+
+    thrust_vec = rocket_pointing_dir * current_thrust_n
+    force_net = thrust_vec + force_gravity + force_drag
+
+    if pos[2] <= 0 and force_net[2] < 0:
+        force_net[2] = 0
+
     acceleration = force_net / current_mass_kg
-    return acceleration
+
+    torque_net = np.array([0.0, 0.0, 0.0])  # Placeholder for net torque calculation
+    inertia_inv = np.linalg.inv(inertia_tensor)
+    gyroscopic_torque = np.cross(omega, inertia_tensor @ omega)
+
+    angular_acceleration = inertia_inv @ (torque_net - gyroscopic_torque)
+
+    return acceleration, angular_acceleration
