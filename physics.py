@@ -9,7 +9,30 @@ def quat_to_rot_matrix(quat):
     ])
     return M
 
-def calculate_6dof_kinematics(rocket, environment, pos, vel, quat, omega, current_thrust_n, current_mass_kg, inertia_tensor):
+def calculate_aerodynamics(rocket, alpha_rads):
+    cn_nose = 2.0
+    cp_nose = 0.5 * rocket.nose_length
+    R = rocket.radius_m
+    S = rocket.fin_span
+    Cr = rocket.fin_root_chord
+    Ct = rocket.fin_tip_chord
+    Lf = rocket.fin_sweep
+    Xr = rocket.dist_to_fins
+
+    k_fb = 1 + (R/ (S + R))
+
+    cn_fins_term1 = 4.0 * rocket.num_fins * (S / rocket.diameter_m)**2
+    cn_fins_term2 = 1.0 + np.sqrt(1.0 + (2.0 * Lf / (Cr + Ct))**2)
+    cn_fins = k_fb * (cn_fins_term1 / cn_fins_term2)
+
+    cp_fins = Xr + (Lf / 3.0) * ((Cr + 2.0 * Ct) / (Cr + Ct)) + (1.0 / 6.0) * ((Cr + Ct) - (Cr * Ct) / (Cr + Ct))
+
+    cn_total = cn_nose + cn_fins
+    cp_total = ((cn_nose * cp_nose) + (cn_fins * cp_fins)) / cn_total
+
+    return cn_total, cp_total
+
+def calculate_6dof_kinematics(rocket, environment, pos, vel, quat, omega, current_thrust_n, current_mass_kg, current_cg, inertia_tensor):
     rot_matrix = quat_to_rot_matrix(quat)
     rocket_pointing_dir = rot_matrix @ np.array([0, 0, 1])
 
@@ -37,10 +60,29 @@ def calculate_6dof_kinematics(rocket, environment, pos, vel, quat, omega, curren
 
     acceleration = force_net / current_mass_kg
 
+    wind_vector = np.array([5.0, 0.0, 0.0])  # Example wind vector (5 m/s in x-direction)
+    air_velocity = vel - wind_vector
+    airspeed = np.linalg.norm(air_velocity)
+
     torque_net = np.array([0.0, 0.0, 0.0])  # Placeholder for net torque calculation
+
+    if airspeed > 0.1:
+        air_dir = air_velocity / airspeed
+        cos_alpha = np.dot(rocket_pointing_dir, air_dir)
+        cos_alpha = np.clip(cos_alpha, -1.0, 1.0)
+        alpha = np.arccos(cos_alpha)
+
+        cn_total, cp_total = calculate_aerodynamics(rocket, alpha)
+        normal_force_mag = 0.5 * rho * (airspeed**2) * cn_total * rocket.reference_area * alpha
+        lever_arm = cp_total - current_cg
+        torque_axis = np.cross(rocket_pointing_dir, air_dir)
+        if np.linalg.norm(torque_axis) > 0.001:
+            torque_axis = torque_axis / np.linalg.norm(torque_axis)
+            torque_net = (normal_force_mag * lever_arm) * torque_axis
+
     inertia_inv = np.linalg.inv(inertia_tensor)
     gyroscopic_torque = np.cross(omega, inertia_tensor @ omega)
-
     angular_acceleration = inertia_inv @ (torque_net - gyroscopic_torque)
 
     return acceleration, angular_acceleration
+

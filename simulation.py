@@ -9,9 +9,10 @@ def flight_loop(time, state, rocket, environment):
 
     current_thrust = rocket.get_thrust(time)
     current_mass = rocket.get_mass(time)
+    current_cg = rocket.get_cg(time)
     inertia_tensor = rocket.get_inertia_tensor(time)
 
-    acceleration, angular_acceleration = calculate_6dof_kinematics(rocket, environment, pos, vel, quat, omega, current_thrust, current_mass, inertia_tensor)
+    acceleration, angular_acceleration = calculate_6dof_kinematics(rocket, environment, pos, vel, quat, omega, current_thrust, current_mass, current_cg, inertia_tensor)
 
     w_x, w_y, w_z = omega
     q0, q1, q2, q3 = quat
