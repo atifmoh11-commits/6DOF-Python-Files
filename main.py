@@ -1,50 +1,34 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import config
 from rocket import Rocket
 from environment import Environment
 from simulation import flight_loop, hit_ground
 from scipy.integrate import solve_ivp
 from scipy.spatial.transform import Rotation
 
-#ROCKET GEOMETRY CONFIGURATION (meters)
-DIAMETER = 0.080
-REFERENCE_AREA = 3.14159 * (DIAMETER / 2.0)**2
-
-NOSE_LENGTH = 0.178
-NUM_FINS = 3
-FIN_ROOT_CHORD = 0.127
-FIN_TIP_CHORD = 0.0635
-FIN_SPAN = 0.0927
-FIN_SWEEP = 0.1016
-
-# Assuming fins are mounted flush with the bottom of the tube.
-# Nose + Tube = total length. 
-# Fin root leading edge = total length - root chord = distance from nose tip.
-# inches -> meters.
-DIST_TO_FINS = 0.965
-
 my_rocket = Rocket(
-    diameter=DIAMETER, 
-    nose_length=NOSE_LENGTH,
-    num_fins=NUM_FINS,
-    fin_root_chord=FIN_ROOT_CHORD,
-    fin_tip_chord=FIN_TIP_CHORD,
-    fin_span=FIN_SPAN,
-    fin_sweep=FIN_SWEEP,
-    dist_to_fins=DIST_TO_FINS,
-    drag_file="drag_data.csv",
-    motor_file="motor_data.csv",
-    mass_file="mass_data.csv",
-    cg_file="cg_data.csv",
-    moi_file="moi_data.csv"
+    diameter=config.DIAMETER, 
+    nose_length=config.NOSE_LENGTH,
+    num_fins=config.NUM_FINS,
+    fin_root_chord=config.FIN_ROOT_CHORD,
+    fin_tip_chord=config.FIN_TIP_CHORD,
+    fin_span=config.FIN_SPAN,
+    fin_sweep=config.FIN_SWEEP,
+    dist_to_fins=config.DIST_TO_FINS,
+    drag_file=config.DRAG_FILE,
+    motor_file=config.MOTOR_FILE,
+    mass_file=config.MASS_FILE,
+    cg_file=config.CG_FILE,
+    moi_file=config.MOI_FILE
 )
 
-my_env = Environment(launchpad_altitude_m=0)
+my_env = Environment(launchpad_altitude_m=config.LAUNCHPAD_ALTITUDE_M, wind_vector=config.WIND_VECTOR, temp_offset_c=config.TEMP_OFFSET_C)
 
 #if you want to change wind direction vector please head to physics.py and change the wind_vector variable in the calculate_6dof_kinematics function. It is currently set to 5 m/s in the x direction. You can change the magnitude and direction as needed.
 
-time_limit = (0.0, 60.0)
+time_limit = (0.0, config.TIME_LIMIT)
 initital_state = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0] #x, y, z, vx, vy, vz, q1, q2, q3, q4, wx, wy, wz
 
 ground_event = lambda t, y: hit_ground(t, y, my_rocket, my_env)

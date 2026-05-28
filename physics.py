@@ -60,7 +60,7 @@ def calculate_6dof_kinematics(rocket, environment, pos, vel, quat, omega, curren
 
     acceleration = force_net / current_mass_kg
 
-    wind_vector = np.array([5.0, 0.0, 0.0])  # Example wind vector (5 m/s in x-direction)
+    wind_vector = environment.get_wind_vector(pos[2])  # Example wind vector (5 m/s in x-direction)
     air_velocity = vel - wind_vector
     airspeed = np.linalg.norm(air_velocity)
 

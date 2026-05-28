@@ -2,7 +2,8 @@ import pyvista as pv
 import pandas as pd
 import numpy as np
 from scipy.spatial.transform import Rotation
-import time  
+import time
+import config  
 
 # 1. Load the telemetry and 3D model
 try: 
@@ -26,6 +27,11 @@ plotter = pv.Plotter()
 # --- AESTHETIC UPGRADES ---
 plotter.set_background("#3f3f3f")  # grayish-black background
 actor = plotter.add_mesh(mesh, color="green", smooth_shading=True)  # green rocket
+wind_vec = np.array(config.WIND_VECTOR)
+if np.linalg.norm(wind_vec) > 0.1:
+    arrow = pv.Arrow(start=(0, 0, 0), direction=wind_vec, scale=100)
+    plotter.add_mesh(arrow, color="cyan", label="Wind Direction")
+    plotter.add_text("Wind Direction (Cyan Arrow)", position="upper_right", font_size=10, color="white")
 
 plotter.add_axes()
 plotter.show_grid(color="gray")
@@ -172,4 +178,4 @@ while plotter.iren.initialized and not plotter._closed:
         update_frame(new_time)
         
     plotter.update()
-    time.sleep(0.02)
+    time.sleep(0.005)
