@@ -2,7 +2,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 class Rocket:
-    def __init__(self, diameter, nose_length, num_fins, fin_root_chord, fin_tip_chord, fin_span, fin_sweep, dist_to_fins, drag_file=None, motor_file=None, mass_file=None, cg_file=None, moi_file=None):
+    def __init__(self, diameter, nose_length, num_fins, fin_root_chord, fin_tip_chord, fin_span, fin_sweep, dist_to_fins, fin_cant_angle=0.0, drag_file=None, motor_file=None, mass_file=None, cg_file=None, moi_file=None):
         self.diameter_m = diameter
         self.radius_m = diameter / 2.0
         self.reference_area = np.pi * (self.radius_m)**2
@@ -14,6 +14,7 @@ class Rocket:
         self.fin_span = fin_span
         self.fin_sweep = fin_sweep
         self.dist_to_fins = dist_to_fins
+        self.fin_cant_angle_rad = np.radians(fin_cant_angle)
 
         self.cd_func = lambda mach: 0.75
         self.thrust_func = lambda time: 0.0

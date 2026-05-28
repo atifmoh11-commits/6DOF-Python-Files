@@ -17,6 +17,7 @@ my_rocket = Rocket(
     fin_span=config.FIN_SPAN,
     fin_sweep=config.FIN_SWEEP,
     dist_to_fins=config.DIST_TO_FINS,
+    fin_cant_angle=config.FIN_CANT_ANGLE_DEG,
     drag_file=config.DRAG_FILE,
     motor_file=config.MOTOR_FILE,
     mass_file=config.MASS_FILE,

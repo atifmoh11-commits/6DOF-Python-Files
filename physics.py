@@ -1,4 +1,5 @@
 import numpy as np
+import config
 
 def quat_to_rot_matrix(quat):
     w, x, y, z = quat
@@ -72,6 +73,16 @@ def calculate_6dof_kinematics(rocket, environment, pos, vel, quat, omega, curren
         cos_alpha = np.clip(cos_alpha, -1.0, 1.0)
         alpha = np.arccos(cos_alpha)
 
+        max_alpha_rad = np.radians(20)
+        if alpha > max_alpha_rad and pos[2] > config.LAUNCH_RAIL_LENGTH_M:
+            import sys
+            print("\n" + "="*50)
+            print("🛑 TILT LOCKOUT TRIGGERED 🛑")
+            print(f"Angle of Attack reached {np.degrees(alpha):.1f}° off the launch rail.")
+            print("Safety limit exceeded (Max 15.0°). Launch aborted.")
+            print("="*50 + "\n")
+            sys.exit()
+
         cn_total, cp_total = calculate_aerodynamics(rocket, alpha)
         normal_force_mag = 0.5 * rho * (airspeed**2) * cn_total * rocket.reference_area * alpha
         lever_arm = cp_total - current_cg
@@ -83,7 +94,7 @@ def calculate_6dof_kinematics(rocket, environment, pos, vel, quat, omega, curren
         omega_inertial = rot_matrix @ omega
 
         # accounting for imperfections in rocket that induce roll (fin cant etc.)
-        cant_angle_rad = np.radians(0.1)
+        cant_angle_rad = rocket.fin_cant_angle_rad
 
         fin_area = rocket.fin_span * (rocket.fin_root_chord + rocket.fin_tip_chord) / 2.0
         moment_arm = (rocket.diameter_m / 2.0) + (rocket.fin_span / 2.0)
@@ -116,6 +127,10 @@ def calculate_6dof_kinematics(rocket, environment, pos, vel, quat, omega, curren
     inertia_inv = np.linalg.inv(inertia_tensor)
     gyroscopic_torque = np.cross(omega, inertia_tensor @ omega)
     angular_acceleration = inertia_inv @ (torque_net_body - gyroscopic_torque)
+
+    launch_rail_length_m = config.LAUNCH_RAIL_LENGTH_M
+    if pos[2] < launch_rail_length_m:
+        angular_acceleration = np.array([0.0, 0.0, 0.0])
 
     return acceleration, angular_acceleration
 
