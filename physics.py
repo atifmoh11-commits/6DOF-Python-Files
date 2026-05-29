@@ -73,8 +73,8 @@ def calculate_6dof_kinematics(rocket, environment, pos, vel, quat, omega, curren
         cos_alpha = np.clip(cos_alpha, -1.0, 1.0)
         alpha = np.arccos(cos_alpha)
 
-        max_alpha_rad = np.radians(20)
-        if alpha > max_alpha_rad and pos[2] > config.LAUNCH_RAIL_LENGTH_M:
+        max_alpha_rad = np.radians(25)
+        if alpha > max_alpha_rad and config.LAUNCH_RAIL_LENGTH_M < pos[2] < 100:
             import sys
             print("\n" + "="*50)
             print("🛑 TILT LOCKOUT TRIGGERED 🛑")
