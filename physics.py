@@ -18,6 +18,7 @@ def calculate_aerodynamics(rocket, alpha_rads):
     cn_nose = 2.0                       # Normal force coefficient for the nose cone, assuming a conical shape. 
     cp_nose = 0.5 * rocket.nose_length  # Center of pressure for the nose cone, located at 50% of the nose length from the tip for a conical shape.
     S = rocket.fin_span
+    R = rocket.radius_m
     Cr = rocket.fin_root_chord
     Ct = rocket.fin_tip_chord
     Lf = rocket.fin_sweep

@@ -35,7 +35,7 @@ LAUNCH_RAIL_LENGTH_M = 1     # Length of the launch rail in meters.
 
 # Wind vector: [X-velocity, Y-velocity, Z-velocity] in meters per second
 # Example: [5.0, 0.0, 0.0] means a 5 m/s wind blowing in the +X direction
-WIND_VECTOR = [2, 2, 0.0]   
+WIND_VECTOR = [5, 0, 0.0]   
 
 # --- SIMULATION PARAMETERS ---
 TIME_LIMIT = 40.0               # Maximum allowed simulation time in seconds
