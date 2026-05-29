@@ -5,7 +5,7 @@ from scipy.spatial.transform import Rotation
 import time
 import config  
 
-# 1. Load the telemetry and 3D model
+# Load the telemetry and 3D model
 try: 
     data = pd.read_csv("telemetry.csv")
     mesh = pv.read(config.ROCKET_MODEL_FILE)
@@ -31,31 +31,32 @@ burnout_time = data['Time'].iloc[burnout_idx]
 
 plotter = pv.Plotter()
 
-# --- AESTHETIC UPGRADES ---
+# AESTHETIC UPGRADES
 plotter.set_background("#3f3f3f")  # grayish-black background
-actor = plotter.add_mesh(mesh, color="green", smooth_shading=True)  # green rocket
+actor = plotter.add_mesh(mesh, color=config.ROCKET_COLOR, smooth_shading=True)  # rocket color
 ground = pv.Plane(center=(0, 0, 0), i_size=1000, j_size=1000)
 plotter.add_mesh(ground, color="light green", opacity=0.3, show_edges=False)
 
-# Launch Pad Reference (a cylinder)
+# Launch Pad Reference
 pad_base = pv.Cylinder(
-    center=(0, 0, 0.05),  # Moved back to exact center (0, 0)
+    center=(0, 0, 0.05),  
     direction=(0, 0, 1), 
-    radius=0.5,           # 1 meter across
-    height=0.01            # 10 centimeters tall
+    radius=0.5,          
+    height=0.01            
 )
 plotter.add_mesh(pad_base, color="black")
 
-# 2. The Launch Rail (Tall and skinny)
+# The Launch Rail 
 rail_height = config.LAUNCH_RAIL_LENGTH_M
 rail = pv.Cylinder(
-    # Offset X by 0.08m so it sits beside the tube, centered on Y=0
     center=(0.08, 0, rail_height / 2.0), 
     direction=(0, 0, 1), 
-    radius=0.015,         # Slimmed down to 1.5 centimeters thick
+    radius=0.015,         
     height=rail_height
 )
 plotter.add_mesh(rail, color="silver")
+
+# Wind Vector Visualization
 wind_vec = np.array(config.WIND_VECTOR)
 if np.linalg.norm(wind_vec) > 0.1:
     arrow = pv.Arrow(start=(1, 1, 0), direction=wind_vec, scale=1)
@@ -74,7 +75,7 @@ z_min, z_max = mesh.bounds[4], mesh.bounds[5]
 rocket_center_z = (z_max - z_min) / 2.0
 center_offset = np.array([0.0, 0.0, rocket_center_z])
 
-# 2. The Core Update Function
+# The Core Update Function
 def update_frame(time_val):
     global current_time
     current_time = time_val
@@ -220,7 +221,7 @@ plotter.add_key_event("o", zoom_out)
 update_frame(0.0)
 print("Launching 6DOF Rocket Telemetry Visualizer...")
 
-# 4. THE MAIN THREAD FIX (MAC OPTIMIZED)
+# THE MAIN THREAD FIX (MAC OPTIMIZED)
 plotter.show(auto_close=False, interactive_update=True)
 
 while plotter.iren.initialized and not plotter._closed:
@@ -239,4 +240,4 @@ while plotter.iren.initialized and not plotter._closed:
         update_frame(new_time)
         
     plotter.update()
-    time.sleep(0.005)
+    time.sleep(0.005) # Frame Rate Control

@@ -8,6 +8,8 @@ from simulation import flight_loop, hit_ground
 from scipy.integrate import solve_ivp
 from scipy.spatial.transform import Rotation
 
+# This is the main file that orchestrates the entire simulation. 
+
 my_rocket = Rocket(
     diameter=config.DIAMETER, 
     nose_length=config.NOSE_LENGTH,
@@ -27,9 +29,9 @@ my_rocket = Rocket(
 
 my_env = Environment(launchpad_altitude_m=config.LAUNCHPAD_ALTITUDE_M, wind_vector=config.WIND_VECTOR, temp_offset_c=config.TEMP_OFFSET_C)
 
-#if you want to change wind direction vector please head to physics.py and change the wind_vector variable in the calculate_6dof_kinematics function. It is currently set to 5 m/s in the x direction. You can change the magnitude and direction as needed.
-
 time_limit = (0.0, config.TIME_LIMIT)
+
+# The initial state vector for the ODE solver includes the rocket's initial position (x, y, z), velocity (vx, vy, vz), orientation as a quaternion (q0, q1, q2, q3), and angular velocity (wx, wy, wz). The rocket starts at the origin with no initial velocity and is oriented straight up (quaternion [1, 0, 0, 0]) with no spin.
 initital_state = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0] #x, y, z, vx, vy, vz, q1, q2, q3, q4, wx, wy, wz
 
 ground_event = lambda t, y: hit_ground(t, y, my_rocket, my_env)
@@ -44,25 +46,36 @@ flight_data = solve_ivp(
     max_step=0.01,
 )
 
+# flight_data is the object returned by SciPy's solve_ivp.
+# .t contains the time steps, and .y contains the 2D array of state variables at each time step.
 times = flight_data.t
-x_pos, y_pos, z_pos = flight_data.y[0:3]
-vx, vy, vz = flight_data.y[3:6]
-q0, q1, q2, q3 = flight_data.y[6:10]
+x_pos, y_pos, z_pos = flight_data.y[0:3] # Unpack 3D position (Meters)
+vx, vy, vz = flight_data.y[3:6]          # Unpack 3D velocity components (m/s)
+q0, q1, q2, q3 = flight_data.y[6:10]     # Unpack the 4D quaternion (Rotation)
+
 altitudes = z_pos
+# Calculate the total velocity magnitude at every time step using the Pythagorean theorem in 3D
 velocities = np.sqrt(vx**2 + vy**2 + vz**2)
+
+# Finding apogee and saving telemetry data to CSV
 apogee = max(altitudes)
 apogee_index = np.argmax(altitudes)
 apogee_time = times[apogee_index]
 
-quats_scipy = np.vstack((q0, q1, q2, q3)).T
-rotations = Rotation.from_quat(quats_scipy)
-euler_angles = rotations.as_euler('xyz', degrees=True)
+# Converting the quaternions to Euler angles (pitch, yaw, and roll)
+quats_scipy = np.vstack((q0, q1, q2, q3)).T # Transpose so each row is a quaternion at a time step (2D array with shape [num_time_steps, 4])
+rotations = Rotation.from_quat(quats_scipy) # Initialize SciPy's Rotation object using the quat array
+euler_angles = rotations.as_euler('xyz', degrees=True) # Convert quats to Euler angles in degrees
 
+# Split the Euler angles into individual arrays
 pitch = euler_angles[:, 0]
 yaw = euler_angles[:, 1]
 roll = np.rad2deg(np.unwrap(np.deg2rad(euler_angles[:, 2])))
 
+# Calculate 1D acceleration by finding the derivative of the velocity array with respect to time.
 accelerations = np.gradient(velocities, times)
+
+# Calculate Mach number at each time step by dividing the velocity by the speed of sound (approximately 343 m/s at sea level under standard conditions).
 mach_numbers = velocities / 343.0
 
 telemetry_data = {
@@ -76,7 +89,8 @@ df = pd.DataFrame(telemetry_data)
 df.to_csv("telemetry.csv", index=False)
 print(f"Flight complete. Apogee: {apogee:.1f} m. Telemetry saved to CSV.")
 
-# --- 4. BUILD THE DASHBOARD ---
+
+# Visualizing telemetry data
 fig = plt.figure(figsize=(16, 10))
 fig.suptitle("6DOF Rocket Telemetry Dashboard", fontsize=18, fontweight='bold')
 

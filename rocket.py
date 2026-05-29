@@ -1,8 +1,11 @@
 import numpy as np
 from scipy.interpolate import interp1d
 
+# This file defines the Rocket class, which encapsulates all the properties and behaviors of the rocket, including its geometry, mass, center of gravity, moments of inertia, and how these properties change over time. The class includes methods to load data from files for thrust, drag coefficient, mass, center of gravity, and moments of inertia, as well as methods to retrieve these values at any given time during the simulation. The get_inertia_tensor method returns the inertia tensor based on the current time, which is essential for calculating the rocket's rotational dynamics in the physics calculations.
+
 class Rocket:
     def __init__(self, diameter, nose_length, num_fins, fin_root_chord, fin_tip_chord, fin_span, fin_sweep, dist_to_fins, fin_cant_angle=0.0, drag_file=None, motor_file=None, mass_file=None, cg_file=None, moi_file=None):
+        # Defining Rocket properties
         self.diameter_m = diameter
         self.radius_m = diameter / 2.0
         self.reference_area = np.pi * (self.radius_m)**2
@@ -16,13 +19,15 @@ class Rocket:
         self.dist_to_fins = dist_to_fins
         self.fin_cant_angle_rad = np.radians(fin_cant_angle)
 
+        # Default functions that can be overridden by loading data from files
         self.cd_func = lambda mach: 0.75
         self.thrust_func = lambda time: 0.0
-        self.mass_func = lambda time: 1.0
+        self.mass_func = lambda time: 1.0           
         self.cg_func = lambda time: 0.5
         self.moi_long_func = lambda time: 0.05
         self.moi_rot_func = lambda time: 0.001
 
+        # Load data from files if provided
         if drag_file:
             self.load_drag_curve(drag_file)
 
@@ -38,6 +43,8 @@ class Rocket:
         if moi_file:
             self.load_moi_curve(moi_file)
 
+    # Data loading functions
+    # isnan checks are included in the get_ functions to handle any potential issues with the data files, such as missing values or formatting errors. If a value is NaN, a default value is returned to ensure the simulation can continue running without crashing.
     def load_motor_curve(self, motor_file):
         data = np.loadtxt(motor_file, delimiter=',', comments='#')
         raw_time = data[:, 0] 
@@ -120,4 +127,4 @@ class Rocket:
             i_long = 0.05
         if np.isnan(i_rot):
             i_rot = 0.001
-        return np.array([[i_long, 0, 0], [0, i_long, 0], [0, 0, i_rot]])
+        return np.array([[i_long, 0, 0], [0, i_long, 0], [0, 0, i_rot]]) # The inertia tensor is a 3x3 matrix that describes how the rocket's mass is distributed in space, which affects how it responds to torques and rotational forces. In this case, we assume the rocket has symmetry around its longitudinal axis, so the moments of inertia around the x and y axes are the same (i_long), while the moment of inertia around the z-axis (i_rot) can be different due to the distribution of mass along the length of the rocket.

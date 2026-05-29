@@ -22,6 +22,7 @@ FIN_TIP_CHORD = 0.064
 FIN_SPAN = 0.093
 FIN_SWEEP = 0.102
 FIN_CANT_ANGLE_DEG = 0.01 # Very slight cant angle to add realism (degrees) or SET TO 0.0 FOR NO CANT
+ROCKET_COLOR = "green" # Color for visualization (e.g., "red", "blue", "green") choose basic colors
 
 # Distance from the very tip of the nosecone to the leading edge of the fin root
 DIST_TO_FINS = 0.965
