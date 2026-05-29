@@ -131,7 +131,7 @@ $$\dot{q} = \frac{1}{2} q \otimes \omega$$
 
 ---
 
-## ⚙️ Flight Dynamics Features
+## Flight Dynamics Features
 
 - **Rigid Body Kinematics:** The simulation continuously tracks the rocket's orientation using the quaternion state vector, actively normalizing it back to a length of `1.0` every time step. This prevents floating-point math errors from physically "warping" or distorting the rotational axes during extreme flight profiles.
 
@@ -143,7 +143,7 @@ $$\dot{q} = \frac{1}{2} q \otimes \omega$$
 
 ---
 
-## 🛠️ Development & Commit Timeline
+## Development & Commit Timeline
 
 This project was developed iteratively, ensuring each mathematical layer was verified before introducing the next degree of complexity.
 
@@ -155,7 +155,7 @@ This project was developed iteratively, ensuring each mathematical layer was ver
 
 ---
 
-## 💻 How to Run the Simulator
+## How to Run the Simulator
 
 ### Prerequisites
 
